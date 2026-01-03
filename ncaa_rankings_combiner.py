@@ -581,20 +581,28 @@ def print_unmatched(unmatched_net, unmatched_kp):
 def write_csv(matched_teams, output_file):
     """Write combined rankings to CSV."""
     print(f"\nWriting combined rankings to {output_file}...")
-    
+
+    # Calculate offensive ranking (highest Off_Rating = rank 1)
+    teams_by_off = sorted(matched_teams, key=lambda x: float(x['kp_ortg']), reverse=True)
+    off_rankings = {team['kp_team']: rank + 1 for rank, team in enumerate(teams_by_off)}
+
+    # Calculate defensive ranking (lowest Def_Rating = rank 1)
+    teams_by_def = sorted(matched_teams, key=lambda x: float(x['kp_drtg']))
+    def_rankings = {team['kp_team']: rank + 1 for rank, team in enumerate(teams_by_def)}
+
     # Sort by KenPom ranking
     matched_teams.sort(key=lambda x: x['kp_rank'])
-    
+
     fieldnames = [
         'KenPom_Rank', 'NET_Rank', 'Team', 'Conference', 'Record',
-        'Net_Rating', 'Off_Rating', 'Def_Rating', 'Adj_Tempo', 'SOS',
-        'Q1', 'Q2', 'Q3', 'Q4'
+        'Net_Rating', 'Off_Rating', 'Off_Ranking', 'Def_Rating', 'Def_Ranking',
+        'Adj_Tempo', 'SOS', 'Q1', 'Q2', 'Q3', 'Q4'
     ]
-    
+
     with open(output_file, 'w', newline='', encoding='utf-8') as f:
         writer = csv.DictWriter(f, fieldnames=fieldnames, quoting=csv.QUOTE_NONNUMERIC)
         writer.writeheader()
-        
+
         for team in matched_teams:
             writer.writerow({
                 'KenPom_Rank': team['kp_rank'],
@@ -604,7 +612,9 @@ def write_csv(matched_teams, output_file):
                 'Record': f'="{team["kp_record"]}"',
                 'Net_Rating': team['kp_net_rtg'],
                 'Off_Rating': team['kp_ortg'],
+                'Off_Ranking': off_rankings[team['kp_team']],
                 'Def_Rating': team['kp_drtg'],
+                'Def_Ranking': def_rankings[team['kp_team']],
                 'Adj_Tempo': team['kp_adj_tempo'],
                 'SOS': team['kp_sos'],
                 'Q1': f'="{team["net_q1"]}"',
@@ -612,7 +622,7 @@ def write_csv(matched_teams, output_file):
                 'Q3': f'="{team["net_q3"]}"',
                 'Q4': f'="{team["net_q4"]}"',
             })
-    
+
     print(f"  Wrote {len(matched_teams)} teams to CSV")
 
 
