@@ -594,7 +594,7 @@ def write_csv(matched_teams, output_file):
     matched_teams.sort(key=lambda x: x['kp_rank'])
 
     fieldnames = [
-        'KenPom_Rank', 'NET_Rank', 'Team', 'Conference', 'Record',
+        'KenPom_Rank', 'NET_Rank', 'Team', 'Conference', 'Record', 'Win_Pct',
         'Net_Rating', 'Off_Rating', 'Off_Ranking', 'Def_Rating', 'Def_Ranking',
         'Adj_Tempo', 'SOS', 'Q1', 'Q2', 'Q3', 'Q4'
     ]
@@ -604,12 +604,19 @@ def write_csv(matched_teams, output_file):
         writer.writeheader()
 
         for team in matched_teams:
+            # Calculate win percentage from record (format: "W-L")
+            record = team['kp_record']
+            wins, losses = map(int, record.split('-'))
+            total_games = wins + losses
+            win_pct = wins / total_games if total_games > 0 else 0.0
+
             writer.writerow({
                 'KenPom_Rank': team['kp_rank'],
                 'NET_Rank': team['net_rank'],
                 'Team': team['kp_team'],  # Use KenPom name (usually cleaner)
                 'Conference': team['kp_conf'],
                 'Record': f'="{team["kp_record"]}"',
+                'Win_Pct': round(win_pct, 3),
                 'Net_Rating': team['kp_net_rtg'],
                 'Off_Rating': team['kp_ortg'],
                 'Off_Ranking': off_rankings[team['kp_team']],
